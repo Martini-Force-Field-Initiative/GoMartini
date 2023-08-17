@@ -38,7 +38,8 @@ def get_settings():
                         # (this has to result in the correct atom number when added to "k_at" compared to the .itp file)
     c6c12 = 0           # if set to 1, the C6 and C12 term are expected in the .itp file; if set to 0, sigma and go_eps are used
     idp_sig = 0.465	# sigma for the additional LJ interaction between virtual BB beads and W for IDPs
-    return file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig
+    return (file_BB, file_OV, file_rCSU, header_lines,
+             seqDist, cols, missAt, c6c12, idp_sig)
 
 
 def read_pdb(struct_pdb, file_BB, header_lines):
@@ -121,15 +122,17 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short,
 
     pairs = []
     for k in range(0, len(map_OVrCSU)):
-        if (map_OVrCSU[k][2] > cutoff_short) and 
+        if ((map_OVrCSU[k][2] > cutoff_short) and 
            (map_OVrCSU[k][2] < cutoff_long) and 
-           ( abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist ):
+           ( abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist )):
             # parameters for LJ potential
             sigma = map_OVrCSU[k][2] / 1.12246204830        # calc sigma for the LJ potential in [nm]
             Vii = 4.0 * pow(sigma,6) * go_eps
             Wii = 4.0 * pow(sigma,12) * go_eps
-            pairs.append([indBB[ int(map_OVrCSU[k][0])-missRes-1 ,0], indBB[ int(map_OVrCSU[k][1])-missRes-1 ,0], Vii, Wii, 
-                                 map_OVrCSU[k][0], map_OVrCSU[k][1], map_OVrCSU[k][2], sigma])
+            pairs.append([indBB[ int(map_OVrCSU[k][0])-missRes-1 ,0],
+                          indBB[ int(map_OVrCSU[k][1])-missRes-1 ,0], Vii,
+                          Wii, map_OVrCSU[k][0], map_OVrCSU[k][1],
+                          map_OVrCSU[k][2], sigma])
             Vii = []
             Wii = []
         elif map_OVrCSU[k][2] > cutoff_long:
@@ -226,7 +229,7 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
     # writes the files required solely for the IDP-solubility model
     # write the interaction table for the virtual Go beads with water
     with open(file_pref + '_go-table_IDPsolubility.itp','w') as f:
-        f.write('; additional Lennard-Jones interaction between virtual BB bead and W \n')
+        f.write('; additional Lennard-Jones interaction between virtual BB bead and W\n')
         Vii = 4.0 * pow(idp_sig,6) * idp_eps
         Wii = 4.0 * pow(idp_sig,12) * idp_eps
 
