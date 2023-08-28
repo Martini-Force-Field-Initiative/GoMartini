@@ -119,7 +119,8 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short,
            cutoff_long, go_eps, seqDist, missRes):
     # calculate the distances based on the coordinates of the CG BB bead
     for k in range(0, len(map_OVrCSU)):
-        dist_vec = indBB[ int(map_OVrCSU[k][1])-missRes-1 ,1:4] - indBB[ int(map_OVrCSU[k][0])-missRes-1 ,1:4]
+        dist_vec = (indBB[ int(map_OVrCSU[k][1])-missRes-1 ,1:4] - 
+                    indBB[ int(map_OVrCSU[k][0])-missRes-1 ,1:4])
         map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
 
     pairs = []
@@ -128,7 +129,8 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short,
            (map_OVrCSU[k][2] < cutoff_long) and 
            ( abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist )):
             # parameters for LJ potential
-            sigma = map_OVrCSU[k][2] / 1.12246204830        # calc sigma for the LJ potential in [nm]
+            # calc sigma for the LJ potential in [nm]
+            sigma = map_OVrCSU[k][2] / 1.12246204830   
             Vii = 4.0 * pow(sigma,6) * go_eps
             Wii = 4.0 * pow(sigma,12) * go_eps
             pairs.append([indBB[ int(map_OVrCSU[k][0])-missRes-1 ,0],
@@ -149,7 +151,8 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short,
                    + str(map_OVrCSU[k]))
 
     sym_pairs = []
-    # count contacts only once; exclude asymmetric rCSU contacts (cf. doi 10.1063/1.4929599)
+    # count contacts only once; 
+    # exclude asymmetric rCSU contacts (cf. doi 10.1063/1.4929599)
     for k in range(0, len(pairs)):
         if pairs[k][0] < pairs[k][1]:
             for l in range(k+1, len(pairs)):
