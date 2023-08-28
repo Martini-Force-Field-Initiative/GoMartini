@@ -19,7 +19,8 @@ def user_input():
     parser.add_argument('--idp_eps', type=float, default=0.0, help='Dissociation energy [kJ/mol] of the Lennard-Jones potential used to increase the water interaction of the protein backbone of IDPs via the virtual backbone beads (default: 0.0).')
     parser.add_argument('--idp_start', type=int, default=0, help='First resid of the IDP fragment of the protein (default: first residue of the protein).')
     parser.add_argument('--idp_end', type=int, default=0, help='Last resid of the IDP fragment of the protein (default: last residue of the protein).')
-#    parser.add_argument('', help='')
+    parser.add_argument('--idp_auto', type=bool, default=False, help='Automatically apply water-BB interaction adjustments based on secondary structure.')
+    parser.add_argument('--itp', help='File containing the Martini 3 protein itp.')
     args = parser.parse_args()
     return args
 
@@ -256,6 +257,36 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
 
     subprocess.call("echo '#include \"" + file_pref + "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
 
+
+def write_autoidp(file_pref, indBB, missRes, idp_sig, itp):
+    # writes the files required solely for the IDP-solubility model
+    # write the interaction table for the virtual Go beads with water
+    with open(file_pref + '_go-table_IDPsolubility.itp','w') as f:
+        f.write('; additional Lennard-Jones interaction between virtual BB bead and W\n')
+
+        # adapt residue index due to missing residues if no custom residue interval is specified
+        idp_start = missRes + 1
+        idp_end = missRes + len(indBB)
+        
+        ss = get_ss(itp)
+
+        eps=[]
+        for aa in ss:
+            if aa == 'C':
+                eps.append(0.5)
+            elif aa == 'H':
+                eps.append(-0.5)
+            else:
+                eps.append(0.0)
+
+        for k in range(idp_start, idp_end+1):
+            # to write the LJ potential itp:
+            s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", idp_sig[k-1], eps[k-1])
+            f.write(s2print)
+
+    subprocess.call("echo '#include \"" + file_pref + "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
+
+
 def get_idp_sig(nameAA):
     idp_sig=[]
     for aa in nameAA:
@@ -264,6 +295,14 @@ def get_idp_sig(nameAA):
         else:
             idp_sig.append(0.470)
     return idp_sig
+
+
+def get_ss(itp):
+    with open(itp,'r') as fid:
+        dat = fid.readlines()
+    dat = dat[5][2:-1]
+    return dat
+
 
 def main():
     args = user_input()
@@ -274,15 +313,17 @@ def main():
 
     if args.go_eps != 0.0:
         map_OVrCSU = read_contmap(args.f, file_OV, file_rCSU, header_lines, cols)
-
         sym_pairs = get_go(indBB, nameAA, map_OVrCSU, args.cutoff_short, args.cutoff_long, args.go_eps, seqDist, args.missres)
-
         write_gofiles(args.moltype, sym_pairs, missAt, indBB, args.missres, args.Natoms, args.go_eps, c6c12)
         print('All symmetric OV and rCSU contacts written! Have fun!')
-
-    if args.idp_eps != 0.0:
+    
+    if args.idp_auto:
         sym_pairs = []
+        write_autoidp(args.moltype, indBB, args.missres, idp_sig, args.itp)
+        print('Additional BB-W interactions written for coils and helices! Have fun!')
 
+    elif args.idp_eps != 0.0:
+        sym_pairs = []
         write_idpfiles(args.moltype, indBB, args.missres, idp_sig, args.idp_eps, args.idp_start, args.idp_end, c6c12)
         print('Additional BB-W interactions written! Have fun!')
 
