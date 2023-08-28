@@ -37,9 +37,10 @@ def get_settings():
     missAt = 0          # number of missing atoms at the beginning of pdb structure
                         # (this has to result in the correct atom number when added to "k_at" compared to the .itp file)
     c6c12 = 0           # if set to 1, the C6 and C12 term are expected in the .itp file; if set to 0, sigma and go_eps are used
-    idp_sig = 0.465	# sigma for the additional LJ interaction between virtual BB beads and W for IDPs
+    #idp_sig = 0.465	# sigma for the additional LJ interaction between virtual BB beads and W for IDPs
+    #deprecated in favor of having sig per residue
     return (file_BB, file_OV, file_rCSU, header_lines,
-             seqDist, cols, missAt, c6c12, idp_sig)
+             seqDist, cols, missAt, c6c12)#, idp_sig)
 
 
 def read_pdb(struct_pdb, file_BB, header_lines):
@@ -63,7 +64,7 @@ def read_pdb(struct_pdb, file_BB, header_lines):
                       float(tmp[7]), float(tmp[8]) ])
         nameAA.append(tmp[3])
     indBB = np.array(indBB)
-
+    print(nameAA)
     return indBB, nameAA
 
 
@@ -118,7 +119,7 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short,
     # calculate the distances based on the coordinates of the CG BB bead
     for k in range(0, len(map_OVrCSU)):
         dist_vec = indBB[ int(map_OVrCSU[k][1])-missRes-1 ,1:4] - indBB[ int(map_OVrCSU[k][0])-missRes-1 ,1:4]
-        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) /10     # [Ang] to [nm]
+        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
 
     pairs = []
     for k in range(0, len(map_OVrCSU)):
@@ -230,8 +231,6 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
     # write the interaction table for the virtual Go beads with water
     with open(file_pref + '_go-table_IDPsolubility.itp','w') as f:
         f.write('; additional Lennard-Jones interaction between virtual BB bead and W\n')
-        Vii = 4.0 * pow(idp_sig,6) * idp_eps
-        Wii = 4.0 * pow(idp_sig,12) * idp_eps
 
         # adapt residue index due to missing residues if no custom residue interval is specified
         if idp_start == 0:
@@ -244,21 +243,34 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
         if (c6c12 == 1):
             for k in range(idp_start, idp_end+1):
                 # to write the LJ potential itp:
+                Vii = 4.0 * pow(idp_sig[k-1],6) * idp_eps
+                Wii = 4.0 * pow(idp_sig[k-1],12) * idp_eps
+
                 s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", Vii, Wii) 
                 f.write(s2print)
         else:
             for k in range(idp_start, idp_end+1):
                 # to write the LJ potential itp:
-                s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", idp_sig, idp_eps)
+                s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", idp_sig[k-1], idp_eps)
                 f.write(s2print)
 
     subprocess.call("echo '#include \"" + file_pref + "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
 
+def get_idp_sig(nameAA):
+    idp_sig=[]
+    for aa in nameAA:
+        if aa in ['GLY', 'ALA', 'VAL', 'PRO']:
+            idp_sig.append(0.430)
+        else:
+            idp_sig.append(0.470)
+    return idp_sig
 
 def main():
     args = user_input()
-    file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig = get_settings()
+    #file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig = get_settings()
+    file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12 = get_settings()
     indBB, nameAA = read_pdb(args.s, file_BB, header_lines)
+    idp_sig = get_idp_sig(nameAA)
 
     if args.go_eps != 0.0:
         map_OVrCSU = read_contmap(args.f, file_OV, file_rCSU, header_lines, cols)
