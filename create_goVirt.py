@@ -9,19 +9,20 @@ import numpy as np
 def user_input():
     ''' Take in input. '''
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-s', help='File containing the coarse-grained structure of the protein in pdb format.')
-    parser.add_argument(
-        '-f', help='File containing the contact analysis of the (atomistic) protein structure obtained from the webserver http://info.ifpan.edu.pl/~rcsu/rcsu/index.html.')
-    parser.add_argument('--moltype', default='molecule_0', help='Molecule name used as prefix in your output file names and the virtual bead names (default: molecule_0). If you will combine your Go-like model with a coarse-grained protein generated with martinize2, you must use the same name as specified with the --govs-moltype flag of martinize2!')
+    parser.add_argument('-s', 
+                        help='File containing the coarse-grained structure of the protein in pdb format.')
+    parser.add_argument('-f', 
+                        help='File containing the contact analysis of the (atomistic) protein structure obtained from the webserver http://info.ifpan.edu.pl/~rcsu/rcsu/index.html.')
+    parser.add_argument('--moltype', default='molecule_0', 
+                        help='Molecule name used as prefix in your output file names and the virtual bead names (default: molecule_0). If you will combine your Go-like model with a coarse-grained protein generated with martinize2, you must use the same name as specified with the --govs-moltype flag of martinize2!')
     parser.add_argument('--go_eps', type=float, default=0.0,
                         help='Dissociation energy [kJ/mol] of the Lennard-Jones potential used in the Go-like model (default: 0.0).')
     parser.add_argument('--cutoff_short', type=float, default=0.3,
                         help='Lower cutoff distance [nm]: contacts with a shorter distance than cutoff_short are not included in the Go-like interactions (default: 0.3).')
     parser.add_argument('--cutoff_long', type=float, default=1.1,
                         help='Upper cutoff distance [nm]: contacts with a longer distance than cutoff_long are not included in the Go-like interactions (default: 1.1).')
-    parser.add_argument(
-        '--Natoms', type=int, help='Number of coarse-grained beads in the protein excluding the virtual Go beads.')
+    parser.add_argument('--Natoms', type=int, 
+                        help='Number of coarse-grained beads in the protein excluding the virtual Go beads.')
     parser.add_argument('--missres', type=int, default=0,
                         help='Number of missing residues at the beginning of the atomistic pdb structure which is needed if the numbering of the coarse-grained structure starts at 1 (default: 0).')
     parser.add_argument('--idp_eps', type=float, default=0.0,
@@ -32,8 +33,8 @@ def user_input():
                         help='Last resid of the IDP fragment of the protein (default: last residue of the protein).')
     parser.add_argument('--idp_auto', type=bool, default=False,
                         help='Automatically apply water-BB interaction adjustments based on secondary structure.')
-    parser.add_argument(
-        '--itp', help='File containing the Martini 3 protein itp.')
+    parser.add_argument('--itp', 
+                        help='File containing the Martini 3 protein itp.')
     args = parser.parse_args()
     return args
 
@@ -78,8 +79,7 @@ def read_pdb(struct_pdb, file_BB, header_lines):
 
     indBB = []
     nameAA = []
-    for k in range(0, len(dat)):
-        tmp = dat[k]
+    for tmp in dat:
         tmp = tmp.split()
         indBB.append([int(tmp[1]), float(tmp[6]),
                       float(tmp[7]), float(tmp[8])])
@@ -90,6 +90,7 @@ def read_pdb(struct_pdb, file_BB, header_lines):
 
 
 def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
+    ''' Read and process the contact map. '''
     # preparation of temporary files for reading
     subprocess.call("grep '1 [01] [01] [01]' "
                     + file_contacts + " > " + file_OV, shell=True)
@@ -107,8 +108,7 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
 
     map_OVrCSU = []
     row = []
-    for k in range(0, len(dat)):
-        tmp = dat[k]
+    for tmp in dat:
         tmp = tmp.replace('\t', ' ')
         tmp = tmp.split()
         for l in cols:
@@ -123,8 +123,7 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
     print('Number of contacts read from your rCSU contact map file: '
           + str(len(dat)))
 
-    for k in range(0, len(dat)):
-        tmp = dat[k]
+    for tmp in dat:
         tmp = tmp.replace('\t', ' ')
         tmp = tmp.split()
         for l in cols:
@@ -137,41 +136,43 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
 
 def get_go(indBB, map_OVrCSU, cutoff_short,
            cutoff_long, go_eps, seqDist, missRes):
-    # calculate the distances based on the coordinates of the CG BB bead
-    for k in range(0, len(map_OVrCSU)):
-        dist_vec = (indBB[int(map_OVrCSU[k][1])-missRes-1, 1:4] -
-                    indBB[int(map_OVrCSU[k][0])-missRes-1, 1:4])
-        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
+    ''' Process GO contact pairs. '''
 
+    ## Get distances based on BB bead position and store em back in map.
+    for k,  mapiter in enumerate(map_OVrCSU):
+        dist_vec = (indBB[int(mapiter[1])-missRes-1, 1:4] -
+                    indBB[int(mapiter[0])-missRes-1, 1:4])
+        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
+   
+   ## Get contact pairs and apply distance exclusions.
     pairs = []
-    for k in range(0, len(map_OVrCSU)):
-        if ((map_OVrCSU[k][2] > cutoff_short) and
-           (map_OVrCSU[k][2] < cutoff_long) and
-           (abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist)):
+    for k,  mapiter in enumerate(map_OVrCSU):
+        if ((mapiter[2] > cutoff_short) and
+           (mapiter[2] < cutoff_long) and
+           (abs(mapiter[1]-mapiter[0]) >= seqDist)):
             # parameters for LJ potential
             # calc sigma for the LJ potential in [nm]
-            sigma = map_OVrCSU[k][2] / 1.12246204830
+            sigma = mapiter[2] / 1.12246204830
             Vii = 4.0 * pow(sigma, 6) * go_eps
             Wii = 4.0 * pow(sigma, 12) * go_eps
-            pairs.append([indBB[int(map_OVrCSU[k][0])-missRes-1, 0],
-                          indBB[int(map_OVrCSU[k][1])-missRes-1, 0], Vii,
-                          Wii, map_OVrCSU[k][0], map_OVrCSU[k][1],
-                          map_OVrCSU[k][2], sigma])
-            Vii = []
-            Wii = []
-        elif map_OVrCSU[k][2] > cutoff_long:
+            pairs.append([indBB[int(mapiter[0])-missRes-1, 0],
+                          indBB[int(mapiter[1])-missRes-1, 0], Vii,
+                          Wii, mapiter[0], mapiter[1],
+                          mapiter[2], sigma])
+
+        elif mapiter[2] > cutoff_long:
             print('This contact is excluded due to distance > cutoff_long: '
-                  + str(map_OVrCSU[k]))
-        elif map_OVrCSU[k][2] < cutoff_short:
+                  + str(mapiter))
+        elif mapiter[2] < cutoff_short:
             print('This contact is excluded due to distance < cutoff_short: '
-                  + str(map_OVrCSU[k]))
-        elif abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) < seqDist:
+                  + str(mapiter))
+        elif abs(mapiter[1]-mapiter[0]) < seqDist:
             print('This contact is excluded because the AA have less than '
                   + str(seqDist-1) + ' other AA between each other: '
-                  + str(map_OVrCSU[k]))
+                  + str(mapiter))
 
     sym_pairs = []
-    # count contacts only once;
+    # Clean up redundant contacts.
     # exclude asymmetric rCSU contacts (cf. doi 10.1063/1.4929599)
     for k in range(0, len(pairs)):
         if pairs[k][0] < pairs[k][1]:
