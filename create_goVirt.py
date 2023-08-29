@@ -9,11 +9,11 @@ import numpy as np
 def user_input():
     ''' Take in input. '''
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', 
+    parser.add_argument('-s',
                         help='File containing the coarse-grained structure of the protein in pdb format.')
-    parser.add_argument('-f', 
+    parser.add_argument('-f',
                         help='File containing the contact analysis of the (atomistic) protein structure obtained from the webserver http://info.ifpan.edu.pl/~rcsu/rcsu/index.html.')
-    parser.add_argument('--moltype', default='molecule_0', 
+    parser.add_argument('--moltype', default='molecule_0',
                         help='Molecule name used as prefix in your output file names and the virtual bead names (default: molecule_0). If you will combine your Go-like model with a coarse-grained protein generated with martinize2, you must use the same name as specified with the --govs-moltype flag of martinize2!')
     parser.add_argument('--go_eps', type=float, default=0.0,
                         help='Dissociation energy [kJ/mol] of the Lennard-Jones potential used in the Go-like model (default: 0.0).')
@@ -21,7 +21,7 @@ def user_input():
                         help='Lower cutoff distance [nm]: contacts with a shorter distance than cutoff_short are not included in the Go-like interactions (default: 0.3).')
     parser.add_argument('--cutoff_long', type=float, default=1.1,
                         help='Upper cutoff distance [nm]: contacts with a longer distance than cutoff_long are not included in the Go-like interactions (default: 1.1).')
-    parser.add_argument('--Natoms', type=int, 
+    parser.add_argument('--Natoms', type=int,
                         help='Number of coarse-grained beads in the protein excluding the virtual Go beads.')
     parser.add_argument('--missres', type=int, default=0,
                         help='Number of missing residues at the beginning of the atomistic pdb structure which is needed if the numbering of the coarse-grained structure starts at 1 (default: 0).')
@@ -31,10 +31,16 @@ def user_input():
                         help='First resid of the IDP fragment of the protein (default: first residue of the protein).')
     parser.add_argument('--idp_end', type=int, default=0,
                         help='Last resid of the IDP fragment of the protein (default: last residue of the protein).')
-    parser.add_argument('--idp_auto', type=bool, default=False,
-                        help='Automatically apply water-BB interaction adjustments based on secondary structure.')
-    parser.add_argument('--itp', 
+    parser.add_argument('--bias_auto', type=bool, default=False,
+                        help='Automatically apply water-BB interaction adjustments based on secondary structure. Reguires --itp to be set.')
+    parser.add_argument('--itp',
                         help='File containing the Martini 3 protein itp.')
+    parser.add_argument('--bias_alfa', type=float, default=-0.5,
+                        help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
+    parser.add_argument('--bias_coil', type=float, default=0.5,
+                        help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
+    parser.add_argument('--bias_beta', type=float, default=0.0,
+                        help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
     args = parser.parse_args()
     return args
 
@@ -138,13 +144,13 @@ def get_go(indBB, map_OVrCSU, cutoff_short,
            cutoff_long, go_eps, seqDist, missRes):
     ''' Process GO contact pairs. '''
 
-    ## Get distances based on BB bead position and store em back in map.
+    # Get distances based on BB bead position and store em back in map.
     for k,  mapiter in enumerate(map_OVrCSU):
         dist_vec = (indBB[int(mapiter[1])-missRes-1, 1:4] -
                     indBB[int(mapiter[0])-missRes-1, 1:4])
         map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
-   
-   ## Get contact pairs and apply distance exclusions.
+
+   # Get contact pairs and apply distance exclusions.
     pairs = []
     for k,  mapiter in enumerate(map_OVrCSU):
         if ((mapiter[2] > cutoff_short) and
@@ -178,17 +184,17 @@ def get_go(indBB, map_OVrCSU, cutoff_short,
         if pairs[k][0] < pairs[k][1]:
             for l in range(k+1, len(pairs)):
                 if ((pairs[l][0] == pairs[k][1]) and
-                        (pairs[l][1] == pairs[k][0])):
+                    (pairs[l][1] == pairs[k][0])):
                     sym_pairs.append(pairs[k])
 
     print('- - - -')
-    print('These results exclude the contacts with distances higher than the cutoff_long (' + 
-          str(cutoff_long) + ' nm), shorter than the cutoff_short (' + 
-          str(cutoff_short) + ' nm), or where the AA have less than ' + 
+    print('These results exclude the contacts with distances higher than the cutoff_long (' +
+          str(cutoff_long) + ' nm), shorter than the cutoff_short (' +
+          str(cutoff_short) + ' nm), or where the AA have less than ' +
           str(seqDist-1) + ' other AA between each other:')
-    print('Sum of symmetric (doubly counted) and asymmetric OV + rCSU contacts: ' + 
+    print('Sum of symmetric (doubly counted) and asymmetric OV + rCSU contacts: ' +
           str(len(pairs)))
-    print('Only symmetric OV + rCSU contacts (singly counted):' + 
+    print('Only symmetric OV + rCSU contacts (singly counted):' +
           str(len(sym_pairs)))
 
     return sym_pairs
@@ -206,7 +212,8 @@ def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
                 file_pref, str(k+1 + missRes))
             f.write(s2print)
     subprocess.call("echo '#include \"" + file_pref +
-                    "_BB-part-def_VirtGoSites.itp\"' >> BB-part-def_VirtGoSites.itp ", shell=True)
+                    "_BB-part-def_VirtGoSites.itp\"' >> BB-part-def_VirtGoSites.itp ",
+                    shell=True)
 
     # write supplementary file: exclusions for protein.itp
     with open(file_pref + '_exclusions_VirtGoSites.itp', 'w', encoding="utf-8") as f:
@@ -215,60 +222,72 @@ def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
         for pair in sym_pairs:
             s2print = " %s  %s  \t ;  %s  %s \n" % (str(int(pair[0]) + missAt),
                                                     str(int(pair[1]) + missAt),
-                                                    str(int(pair[4] - missRes)),
+                                                    str(int(
+                                                        pair[4] - missRes)),
                                                     str(int(pair[5] - missRes)))
             # atom index and residue index adapted due to missing residues
             f.write(s2print)
 
 
 def write_gofiles(file_pref, sym_pairs, missAt, indBB, missRes, Natoms, go_eps, c6c12):
-    # writes the files required solely for the Go-like model
-    # write the interaction table for the Go-like bonds
+    ''' writes the files required solely for the Go-like model
+    write the interaction table for the Go-like bonds '''
+
     with open(file_pref + '_go-table_VirtGoSites.itp', 'w', encoding="utf-8") as f:
         f.write('; OV + symmetric rCSU contacts \n')
         if (c6c12 == 1):
-            for k in range(0, len(sym_pairs)):
+            for pair in sym_pairs:
                 # to write the LJ potential itp:
-                s2print = " %s_%s  %s_%s    1  %.10f  %.10f  ;  %s  %s  %.3f \n" % (file_pref, str(int(sym_pairs[k][4])), file_pref, str(int(sym_pairs[k][5])),
-                                                                                    sym_pairs[k][2], sym_pairs[k][3], str(
-                                                                                        int(sym_pairs[k][0]) + missAt),
-                                                                                    str(int(sym_pairs[k][1]) + missAt), sym_pairs[k][6])
+                s2print = " %s_%s  %s_%s    1  %.10f  %.10f  ;  %s  %s  %.3f \n" % (file_pref, str(int(pair[4])),
+                                                                                    file_pref, str(int(pair[5])),
+                                                                                    pair[2], pair[3],
+                                                                                    str(int(pair[0]) + missAt),
+                                                                                    str(int(pair[1]) + missAt),
+                                                                                    pair[6])
                 # atom index and residue index adapted due to missing residues
                 f.write(s2print)
         else:
-            for k in range(0, len(sym_pairs)):
+            for pair in sym_pairs:
                 # to write the LJ potential itp:
-                s2print = " %s_%s  %s_%s    1  %.10f  %.10f  ;  %s  %s  %.3f \n" % (file_pref, str(int(sym_pairs[k][4])), file_pref, str(int(sym_pairs[k][5])),
-                                                                                    sym_pairs[k][7], go_eps, str(
-                                                                                        int(sym_pairs[k][0]) + missAt),
-                                                                                    str(int(sym_pairs[k][1]) + missAt), sym_pairs[k][6])
+                s2print = " %s_%s  %s_%s    1  %.10f  %.10f  ;  %s  %s  %.3f \n" % (file_pref, str(int(pair[4])),
+                                                                                    file_pref, str(int(pair[5])),
+                                                                                    pair[7], go_eps,
+                                                                                    str(int(pair[0]) + missAt),
+                                                                                    str(int(pair[1]) + missAt),
+                                                                                    pair[6])
                 # atom index and residue index adapted due to missing residues
                 f.write(s2print)
 
     subprocess.call("echo '#include \"" + file_pref +
-                    "_go-table_VirtGoSites.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
+                    "_go-table_VirtGoSites.itp\"' >> go-table_VirtGoSites.itp ",
+                     shell=True)
 
     # write supplementary file: Go-like bonds as harmonic bonds for visulization of the protein
     with open(file_pref + '_go4view_harm.itp', 'w', encoding="utf-8") as f:
         f.write('; Go bonds as harmonic bonds between the virtual particles: \n')
         f.write('; OV + symmetric rCSU contacts \n')
-        for k in range(0, len(sym_pairs)):
+        for pair in sym_pairs:
             # to write the harmonic bonds itp:
-            s2print = " %s  %s  1  %s  1250  ; %s_%s  %s_%s \n" % (str(int(sym_pairs[k][4] - missRes + Natoms)), str(int(sym_pairs[k][5] - missRes + Natoms)), str(round(sym_pairs[k][6], 3)),
-                                                                   file_pref, str(int(sym_pairs[k][4] - missRes)), file_pref, str(int(sym_pairs[k][5] - missRes)))
+            s2print = " %s  %s  1  %s  1250  ; %s_%s  %s_%s \n" % (str(int(pair[4] - missRes + Natoms)),
+                                                                   str(int(pair[5] - missRes + Natoms)),
+                                                                   str(round(pair[6], 3)), file_pref,
+                                                                   str(int(pair[4] - missRes)), file_pref,
+                                                                   str(int(pair[5] - missRes)))
             # the bonds are added between the virtual particles
             f.write(s2print)
         for k in range(0, len(indBB)):
-            # print (np.sum(np.array(sym_pairs)[:,4]==k+1) + np.sum(np.array(sym_pairs)[:,5]==k+1))
             if (np.sum(np.array(sym_pairs)[:, 4] == k+1) + np.sum(np.array(sym_pairs)[:, 5] == k+1)) == 0:
-                s2print = " %s  %s  1  1.  1     ; %s_%s  %s_%s --> added for vmd \n" % (str(
-                    int(k+1 + Natoms)), str(int(k + Natoms)), file_pref, str(k+1), file_pref, str(k))
+                s2print = " %s  %s  1  1.  1     ; %s_%s  %s_%s --> added for vmd \n" % (str(int(k+1 + Natoms)),
+                                                                                         str(int(k + Natoms)),
+                                                                                         file_pref, str(k+1),
+                                                                                         file_pref, str(k))
                 f.write(s2print)
 
 
 def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_end, c6c12):
-    # writes the files required solely for the IDP-solubility model
-    # write the interaction table for the virtual Go beads with water
+    ''' writes the files required solely for the IDP-solubility model
+    write the interaction table for the virtual Go beads with water '''
+
     with open(file_pref + '_go-table_IDPsolubility.itp', 'w', encoding="utf-8") as f:
         f.write(
             '; additional Lennard-Jones interaction between virtual BB bead and W\n')
@@ -281,7 +300,7 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
         if idp_start > idp_end:
             sys.exit('Error: \nYour IDP sequence has a larger ending than starting residue index. Please check your input! \nWill terminate now.')
 
-        if (c6c12 == 1):
+        if c6c12 == 1:
             for k in range(idp_start, idp_end+1):
                 # to write the LJ potential itp:
                 Vii = 4.0 * pow(idp_sig[k-1], 6) * idp_eps
@@ -301,9 +320,11 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
                     "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
 
 
-def write_autoidp(file_pref, indBB, missRes, idp_sig, itp):
-    # writes the files required solely for the IDP-solubility model
-    # write the interaction table for the virtual Go beads with water
+def write_autobias(file_pref, indBB, missRes, idp_sig, itp, bias_alfa, bias_coil, bias_beta):
+    ''' Automatically determines and calculates the VS - W bias for each residue
+    based on their secondary structure assignment. Writes the corresponding .itp
+    files as well. '''
+
     with open(file_pref + '_go-table_IDPsolubility.itp', 'w', encoding="utf-8") as f:
         f.write(
             '; additional Lennard-Jones interaction between virtual BB bead and W\n')
@@ -313,13 +334,15 @@ def write_autoidp(file_pref, indBB, missRes, idp_sig, itp):
         idp_end = missRes + len(indBB)
 
         ss = get_ss(itp)
-
+        
         eps = []
         for aa in ss:
             if aa == 'C':
-                eps.append(0.5)
+                eps.append(bias_coil)
             elif aa == 'H':
-                eps.append(-0.5)
+                eps.append(bias_alfa)
+            elif aa == 'E':
+                eps.append(bias_beta)
             else:
                 eps.append(0.0)
 
@@ -330,7 +353,8 @@ def write_autoidp(file_pref, indBB, missRes, idp_sig, itp):
             f.write(s2print)
 
     subprocess.call("echo '#include \"" + file_pref +
-                    "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
+                    "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ",
+                     shell=True)
 
 
 def get_idp_sig(nameAA):
@@ -338,9 +362,9 @@ def get_idp_sig(nameAA):
     idp_sig = []
     for aa in nameAA:
         if aa in ['GLY', 'ALA', 'VAL', 'PRO']:
-            idp_sig.append(0.430)
+            idp_sig.append(0.430)  ### S bead sigma
         else:
-            idp_sig.append(0.470)
+            idp_sig.append(0.470)  ### R bead sigma
     return idp_sig
 
 
@@ -353,6 +377,8 @@ def get_ss(itp):
 
 
 def main():
+    ''' Main worker.'''
+
     args = user_input()
     file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12 = get_settings()
     indBB, nameAA = read_pdb(args.s, file_BB, header_lines)
@@ -367,9 +393,10 @@ def main():
                       args.missres, args.Natoms, args.go_eps, c6c12)
         print('All symmetric OV and rCSU contacts written! Have fun!')
 
-    if args.idp_auto:
+    if args.bias_auto:
         sym_pairs = []
-        write_autoidp(args.moltype, indBB, args.missres, idp_sig, args.itp)
+        write_autobias(args.moltype, indBB, args.missres, idp_sig, args.itp,
+                       args.bias_alfa, args.bias_coil, args.bias_beta)
         print('Additional BB-W interactions written for coils and helices! Have fun!')
 
     elif args.idp_eps != 0.0:
