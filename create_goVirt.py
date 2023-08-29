@@ -182,17 +182,22 @@ def get_go(indBB, map_OVrCSU, cutoff_short,
                     sym_pairs.append(pairs[k])
 
     print('- - - -')
-    print('These results exclude the contacts with distances higher than the cutoff_long (' + str(cutoff_long) + ' nm), shorter than the cutoff_short (' +
-          str(cutoff_short) + ' nm), or where the AA have less than ' + str(seqDist-1) + ' other AA between each other:')
-    print('Sum of symmetric (doubly counted) and asymmetric OV + rCSU contacts: ' + str(len(pairs)))
-    print('Only symmetric OV + rCSU contacts (singly counted):' + str(len(sym_pairs)))
+    print('These results exclude the contacts with distances higher than the cutoff_long (' + 
+          str(cutoff_long) + ' nm), shorter than the cutoff_short (' + 
+          str(cutoff_short) + ' nm), or where the AA have less than ' + 
+          str(seqDist-1) + ' other AA between each other:')
+    print('Sum of symmetric (doubly counted) and asymmetric OV + rCSU contacts: ' + 
+          str(len(pairs)))
+    print('Only symmetric OV + rCSU contacts (singly counted):' + 
+          str(len(sym_pairs)))
 
     return sym_pairs
 
 
 def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
-    # writes the files required for both cases: Go-like model & IDP solubility
-    # write supplementary file: BB virtual particle definitions for martini.itp
+    ''' writes the files required for both cases: Go-like model & IDP solubility
+    write supplementary file: BB virtual particle definitions for martini.itp '''
+
     with open(file_pref + '_BB-part-def_VirtGoSites.itp', 'w', encoding="utf-8") as f:
         f.write('; protein BB virtual particles \n')
         for k in range(0, len(indBB)):
@@ -207,9 +212,11 @@ def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
     with open(file_pref + '_exclusions_VirtGoSites.itp', 'w', encoding="utf-8") as f:
         f.write(';[ exclusions ] \n')
         f.write('; OV + symmetric rCSU contacts \n')
-        for k in range(0, len(sym_pairs)):
-            s2print = " %s  %s  \t ;  %s  %s \n" % (str(int(sym_pairs[k][0]) + missAt), str(int(sym_pairs[k][1]) + missAt),
-                                                    str(int(sym_pairs[k][4] - missRes)), str(int(sym_pairs[k][5] - missRes)))
+        for pair in sym_pairs:
+            s2print = " %s  %s  \t ;  %s  %s \n" % (str(int(pair[0]) + missAt),
+                                                    str(int(pair[1]) + missAt),
+                                                    str(int(pair[4] - missRes)),
+                                                    str(int(pair[5] - missRes)))
             # atom index and residue index adapted due to missing residues
             f.write(s2print)
 
