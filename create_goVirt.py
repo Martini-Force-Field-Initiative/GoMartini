@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import argparse
@@ -23,6 +23,7 @@ def user_input():
     args = parser.parse_args()
     return args
 
+
 def get_settings():
     # names for temporary files:
     file_BB = 'BB.pdb'
@@ -36,8 +37,11 @@ def get_settings():
     missAt = 0          # number of missing atoms at the beginning of pdb structure
                         # (this has to result in the correct atom number when added to "k_at" compared to the .itp file)
     c6c12 = 0           # if set to 1, the C6 and C12 term are expected in the .itp file; if set to 0, sigma and go_eps are used
-    idp_sig = 0.465	# sigma for the additional LJ interaction between virtual BB beads and W for IDPs
-    return file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig
+    #idp_sig = 0.465	# sigma for the additional LJ interaction between virtual BB beads and W for IDPs
+    #deprecated in favor of having sig per residue
+    return (file_BB, file_OV, file_rCSU, header_lines,
+             seqDist, cols, missAt, c6c12)#, idp_sig)
+
 
 def read_pdb(struct_pdb, file_BB, header_lines):
     # preparation of temporary files for reading
@@ -48,31 +52,37 @@ def read_pdb(struct_pdb, file_BB, header_lines):
     with open(file_BB,'r') as fid:
         dat = fid.readlines()
     dat = dat[header_lines:-1]
-    print('Number of coarse-grained BB beads in your protein: ' + str(len(dat)))
+    print('Number of coarse-grained BB beads in your protein: ' 
+          + str(len(dat)))
 
     indBB = []
     nameAA = []
     for k in range(0, len(dat)):
         tmp = dat[k]
         tmp = tmp.split()
-        indBB.append([ int(tmp[1]), float(tmp[6]), float(tmp[7]), float(tmp[8]) ])
+        indBB.append([ int(tmp[1]), float(tmp[6]), 
+                      float(tmp[7]), float(tmp[8]) ])
         nameAA.append(tmp[3])
     indBB = np.array(indBB)
-
+    print(nameAA)
     return indBB, nameAA
+
 
 def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
     # preparation of temporary files for reading
-    subprocess.call("grep '1 [01] [01] [01]' " + file_contacts + " > " + file_OV, shell=True)
+    subprocess.call("grep '1 [01] [01] [01]' " 
+                    + file_contacts + " > " + file_OV, shell=True)
     subprocess.call("echo '' >> " + file_OV, shell=True)
-    subprocess.call("grep '0 [01] [01] 1' " + file_contacts + " > " + file_rCSU, shell=True)
+    subprocess.call("grep '0 [01] [01] 1' " + file_contacts 
+                    + " > " + file_rCSU, shell=True)
     subprocess.call("echo '' >> " + file_rCSU, shell=True)
 
     # read OV contact map
     with open(file_OV,'r') as fid:
         dat = fid.readlines()
     dat = dat[header_lines:-1]
-    print('Number of contacts read from your OV contact map file: ' + str(len(dat)))
+    print('Number of contacts read from your OV contact map file: ' 
+          + str(len(dat)))
 
     map_OVrCSU = []
     row = []
@@ -89,7 +99,8 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
     with open(file_rCSU,'r') as fid:
         dat = fid.readlines()
     dat = dat[header_lines:-1]
-    print('Number of contacts read from your rCSU contact map file: ' + str(len(dat)))
+    print('Number of contacts read from your rCSU contact map file: ' 
+          + str(len(dat)))
 
     for k in range(0, len(dat)):
         tmp = dat[k]
@@ -102,29 +113,39 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
 
     return map_OVrCSU
 
-def get_go(indBB, nameAA, map_OVrCSU, cutoff_short, cutoff_long, go_eps, seqDist, missRes):
+
+def get_go(indBB, nameAA, map_OVrCSU, cutoff_short, 
+           cutoff_long, go_eps, seqDist, missRes):
     # calculate the distances based on the coordinates of the CG BB bead
     for k in range(0, len(map_OVrCSU)):
         dist_vec = indBB[ int(map_OVrCSU[k][1])-missRes-1 ,1:4] - indBB[ int(map_OVrCSU[k][0])-missRes-1 ,1:4]
-        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) /10     # [Ang] to [nm]
+        map_OVrCSU[k][2] = np.linalg.norm(dist_vec) / 10     # [Ang] to [nm]
 
     pairs = []
     for k in range(0, len(map_OVrCSU)):
-        if (map_OVrCSU[k][2] > cutoff_short) and (map_OVrCSU[k][2] < cutoff_long) and ( abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist ):
+        if ((map_OVrCSU[k][2] > cutoff_short) and 
+           (map_OVrCSU[k][2] < cutoff_long) and 
+           ( abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) >= seqDist )):
             # parameters for LJ potential
             sigma = map_OVrCSU[k][2] / 1.12246204830        # calc sigma for the LJ potential in [nm]
             Vii = 4.0 * pow(sigma,6) * go_eps
             Wii = 4.0 * pow(sigma,12) * go_eps
-            pairs.append([indBB[ int(map_OVrCSU[k][0])-missRes-1 ,0], indBB[ int(map_OVrCSU[k][1])-missRes-1 ,0], Vii, Wii, 
-                                 map_OVrCSU[k][0], map_OVrCSU[k][1], map_OVrCSU[k][2], sigma])
+            pairs.append([indBB[ int(map_OVrCSU[k][0])-missRes-1 ,0],
+                          indBB[ int(map_OVrCSU[k][1])-missRes-1 ,0], Vii,
+                          Wii, map_OVrCSU[k][0], map_OVrCSU[k][1],
+                          map_OVrCSU[k][2], sigma])
             Vii = []
             Wii = []
         elif map_OVrCSU[k][2] > cutoff_long:
-            print('This contact is excluded due to distance > cutoff_long: ' + str(map_OVrCSU[k]))
+            print('This contact is excluded due to distance > cutoff_long: '
+                   + str(map_OVrCSU[k]))
         elif map_OVrCSU[k][2] < cutoff_short:
-            print('This contact is excluded due to distance < cutoff_short: ' + str(map_OVrCSU[k]))
+            print('This contact is excluded due to distance < cutoff_short: '
+                   + str(map_OVrCSU[k]))
         elif abs(map_OVrCSU[k][1]-map_OVrCSU[k][0]) < seqDist:
-            print('This contact is excluded because the AA have less than ' + str(seqDist-1) + ' other AA between each other: ' + str(map_OVrCSU[k]))
+            print('This contact is excluded because the AA have less than '
+                   + str(seqDist-1) + ' other AA between each other: '
+                   + str(map_OVrCSU[k]))
 
     sym_pairs = []
     # count contacts only once; exclude asymmetric rCSU contacts (cf. doi 10.1063/1.4929599)
@@ -141,6 +162,7 @@ def get_go(indBB, nameAA, map_OVrCSU, cutoff_short, cutoff_long, go_eps, seqDist
     print ('Only symmetric OV + rCSU contacts (singly counted):' + str(len(sym_pairs)))
 
     return sym_pairs
+
 
 def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
     # writes the files required for both cases - Go-like model and IDP solubility
@@ -161,6 +183,7 @@ def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
                                                     str(int(sym_pairs[k][4] -missRes)), str(int(sym_pairs[k][5] -missRes))) 
                                         # atom index and residue index adapted due to missing residues
             f.write(s2print)
+
 
 def write_gofiles(file_pref, sym_pairs, missAt, indBB, missRes, Natoms, go_eps, c6c12):
     # writes the files required solely for the Go-like model
@@ -202,13 +225,12 @@ def write_gofiles(file_pref, sym_pairs, missAt, indBB, missRes, Natoms, go_eps, 
                 s2print = " %s  %s  1  1.  1     ; %s_%s  %s_%s --> added for vmd \n" % (str(int(k+1 +Natoms)), str(int(k +Natoms)), file_pref, str(k+1), file_pref, str(k))
                 f.write(s2print)
 
+
 def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_end, c6c12):
     # writes the files required solely for the IDP-solubility model
     # write the interaction table for the virtual Go beads with water
     with open(file_pref + '_go-table_IDPsolubility.itp','w') as f:
-        f.write('; additional Lennard-Jones interaction between virtual BB bead and W \n')
-        Vii = 4.0 * pow(idp_sig,6) * idp_eps
-        Wii = 4.0 * pow(idp_sig,12) * idp_eps
+        f.write('; additional Lennard-Jones interaction between virtual BB bead and W\n')
 
         # adapt residue index due to missing residues if no custom residue interval is specified
         if idp_start == 0:
@@ -221,20 +243,34 @@ def write_idpfiles(file_pref, indBB, missRes, idp_sig, idp_eps, idp_start, idp_e
         if (c6c12 == 1):
             for k in range(idp_start, idp_end+1):
                 # to write the LJ potential itp:
+                Vii = 4.0 * pow(idp_sig[k-1],6) * idp_eps
+                Wii = 4.0 * pow(idp_sig[k-1],12) * idp_eps
+
                 s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", Vii, Wii) 
                 f.write(s2print)
         else:
             for k in range(idp_start, idp_end+1):
                 # to write the LJ potential itp:
-                s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", idp_sig, idp_eps)
+                s2print = " %s_%s  %s    1  %.10f  %.10f ; \n" % (file_pref, str(int(k)), "W", idp_sig[k-1], idp_eps)
                 f.write(s2print)
 
     subprocess.call("echo '#include \"" + file_pref + "_go-table_IDPsolubility.itp\"' >> go-table_VirtGoSites.itp ", shell=True)
 
+def get_idp_sig(nameAA):
+    idp_sig=[]
+    for aa in nameAA:
+        if aa in ['GLY', 'ALA', 'VAL', 'PRO']:
+            idp_sig.append(0.430)
+        else:
+            idp_sig.append(0.470)
+    return idp_sig
+
 def main():
     args = user_input()
-    file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig = get_settings()
+    #file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12, idp_sig = get_settings()
+    file_BB, file_OV, file_rCSU, header_lines, seqDist, cols, missAt, c6c12 = get_settings()
     indBB, nameAA = read_pdb(args.s, file_BB, header_lines)
+    idp_sig = get_idp_sig(nameAA)
 
     if args.go_eps != 0.0:
         map_OVrCSU = read_contmap(args.f, file_OV, file_rCSU, header_lines, cols)
