@@ -370,8 +370,14 @@ def get_idp_sig(nameAA):
 
 def get_ss(itp):
     ''' Retrieve sec. structure string from .itp file. '''
-    with open(itp, 'r', encoding="utf-8") as fid:
-        dat = fid.readlines()
+    try:
+        with open(itp, 'r', encoding="utf-8") as fid:
+            dat = fid.readlines()
+    except FileNotFoundError as e:
+        raise FileNotFoundError('Could not find the .itp file supplied using --itp.') from e
+    except TypeError as e:
+        raise TypeError('You must define --itp when using --bias_auto.') from e
+
     dat = dat[5][2:-1]
     return dat
 
