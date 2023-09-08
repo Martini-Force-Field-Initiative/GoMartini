@@ -222,8 +222,7 @@ def write_genfiles(file_pref, sym_pairs, missAt, indBB, missRes):
         for pair in sym_pairs:
             s2print = " %s  %s  \t ;  %s  %s \n" % (str(int(pair[0]) + missAt),
                                                     str(int(pair[1]) + missAt),
-                                                    str(int(
-                                                        pair[4] - missRes)),
+                                                    str(int(pair[4] - missRes)),
                                                     str(int(pair[5] - missRes)))
             # atom index and residue index adapted due to missing residues
             f.write(s2print)
@@ -334,7 +333,7 @@ def write_autobias(file_pref, indBB, missRes, idp_sig, itp, bias_alfa, bias_coil
         idp_end = missRes + len(indBB)
 
         ss = get_ss(itp)
-        
+
         eps = []
         for aa in ss:
             if aa == 'C':
