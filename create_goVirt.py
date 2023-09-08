@@ -373,10 +373,10 @@ def get_ss(itp):
     try:
         with open(itp, 'r', encoding="utf-8") as fid:
             dat = fid.readlines()
-    except FileNotFoundError as e:
-        raise FileNotFoundError('Could not find the .itp file supplied using --itp.') from e
-    except TypeError as e:
-        raise TypeError('You must define --itp when using --bias_auto.') from e
+    except FileNotFoundError as err:
+        raise FileNotFoundError('Could not find the .itp file supplied using --itp.') from err
+    except TypeError as err:
+        raise TypeError('You must define --itp when using --bias_auto.') from err
 
     dat = dat[5][2:-1]
     return dat
