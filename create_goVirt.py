@@ -58,7 +58,7 @@ def get_settings():
     # (ElNedyn=3 [Perriole2009]; Go=4 [Poma2017])
     seqDist = 4
     # colums of interest in the OV and rCSU contact map file
-    cols = [5, 9, 10]
+    cols = [2, 6, 10]
     # number of missing atoms at the beginning of pdb file.
     # (this has to result in the correct atom number when
     #  added to "k_at" compared to the .itp file)
@@ -136,7 +136,7 @@ def read_contmap(file_contacts, file_OV, file_rCSU, header_lines, cols):
             row.append(float(tmp[l]))
         map_OVrCSU.append(row)
         row = []
-
+        
     return map_OVrCSU
 
 
