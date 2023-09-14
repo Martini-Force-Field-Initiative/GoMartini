@@ -92,4 +92,23 @@ Because the main Martini force field ``.itp`` should not be changed, the script 
 
 `create_goVirt` can also be used to apply a bias to scale protein-water interactions. The virtual interaction sites are typically used to solely encode the LJ potentials between virtual site pairs that make up the Gō-like scaffold. However, non-bonded interactions between these virtual sites and other regular Martini 3 beads — such as the water bead, W — can also be defined. This can be particularly useful to correct some issues pertaining to unstable helical transmembrane behavior or over-aggregation of intrinsically disordered proteins. 
 
+#### 4.1. Bias a sequence of consecutive amino acid residues
+A bias can be easily applied to a sequence of consecutive amino acid residues by using the `--idp_start` and `--idp_end` flags to define the first and last aminoacid residue number of the sequence to which the bias should be applied and  `--idp_eps` to define the dissociation energy (kJ/mol) of the Lennard-Jones potential used to modulate the BB-W interaction via the virtual backbone beads. Note that `--idp_eps` can be either a positive value (increasing BB-W interactions) or a negative value (decreasing BB-W interactions). 
 
+A typical `create_goVirt` command for generating a Gō-ready `protein.itp` with added BB-W interaction scaling may look something like this:
+
+````
+create_goVirt -s cg.pdb -f contactmap.map --moltype molecule_0 --go_eps 9.414 --idp_start 4 --idp_end 30 --idp_eps 0.5
+````
+
+Note that you can also use `create_goVirt` to build a model that applies the BB-W interaction scaling, without applying the Gō-like scaffold by not defining `--go_eps` or setting `--go_eps 0`.
+
+#### 4.2. Automatically apply bias depending on secondary structure
+
+`create_goVirt` can automatically apply a particular bias depending on the secondary structure motif (alpha-helix, beta-sheet or random coil) associated with each protein residue. To do this `--bias_auto True` can be set. The dissociation energy (kJ/mol) of the Lennard-Jones potential used to modulate the BB-W interactions associated with each secondary structure motif can be set using `--bias_alfa`, `--bias_beta`, and `--bias_coil` for alpha-helix, beta sheet and random coils, respectively. If set to zero (`0`) no bias is applied to residues assigned to this motif. As the secondary structure information is obtained from the protein `.itp` file produced by martinize2, the `--itp` flag must be applied.
+
+A typical `create_goVirt` command for generating a Gō-ready `protein.itp` with added BB-W interaction scaling may look something like this:
+
+````
+create_goVirt -s cg.pdb -f contactmap.map --moltype molecule_0 --go_eps 9.414 --bias_auto True --itp molecule_0.itp --bias_alfa -0.5 --bias_beta 0.0 --bias_coil 0.5
+````
