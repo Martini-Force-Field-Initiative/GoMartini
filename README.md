@@ -50,9 +50,7 @@ Alternatively, a locally executable version of the webserver is also available. 
 
 `create_goVirt` generates all additional files required for GōMartini. 
 
-#### 3.1. Creating a basic Gō-like model
-
-##### 3.1.1. Input
+#### 3.1. Input
 
 In its most basic application, `create_goVirt` requires the CG protein structure of the protein in pdb format (`-s`), the number of CG beads in the protein excluding virtual Gō beads (`--Natoms`), the number of missing residues in the atomistic structure (`--missres`), as well as the contact map file (`-f`). 
 
@@ -62,9 +60,9 @@ In addition, the dissociation energy of the Lennard-Jones potentials (`--go_eps`
 
 The following settings are strongly recommended:
 ``````
---go_eps 9.414 kJ/mol
---cutoff_short 0.3 nm
---cutoff_long 1.1 nm
+--go_eps 9.414 (kJ/mol)
+--cutoff_short 0.3 (nm)
+--cutoff_long 1.1 (nm)
 ``````
 
 A typical `create_goVirt` command for generating a Gō-ready `protein.itp` may look something like this:
@@ -73,24 +71,25 @@ A typical `create_goVirt` command for generating a Gō-ready `protein.itp` may l
 create_goVirt -s cg.pdb -f contactmap.map --moltype molecule_0 --go_eps 9.414
 ````
 
-##### 3.1.2. Output
+#### 3.2. Output
 
-The script generates four files with parameter details required for the GōMartini model. The file names do have a prefix to specify the respective protein or chain. The name ending as well as the information contained in the files is listed below: file name content / function
+The script generates four files with parameter details required for the GōMartini model. The file names have a prefix to specify the respective protein or chain (defined by `--moltype`). The name ending as well as the content of each file is listed below: 
 
-<moltype>_BB-part-def_VirtGoSites.itp bead definitions for the virtual particles
-<moltype>_go-table_VirtGoSites.itp interaction table of the Gō-like bonds
-<moltype>_exclusions_VirtGoSites.itp exclusions
-<moltype>_go4view_harm.itp representing the Gō-like bonds for visualization
-
-Please do not change the names of the files as they are included in various other itp files in a way that requires the correct file names. Because the Martini force field itp should not be changed, the script adds the required include statements to two files which are included in the force field if the variable GO_VIRT is defined in the top file. The variable definition is set in the top file by martinize2 if the option --govs-include is
-specified.
-
-#### 3.2. Adding a water bias to the Gō-like model
+| File name | Description |
+| ----------- | ----------- |
+| `<moltype>_BB-part-def_VirtGoSites.itp` | Bead definitions for the virtual particles. |
+| `<moltype>_go-table_VirtGoSites.itp` | Gō-like bonds interaction table. | 
+| `<moltype>_exclusions_VirtGoSites.itp` | Exclusions table. | 
+| `<moltype>_go4view_harm.itp` | Harmonic Gō-like bonds for visualization only.
 
 
-
-If you specify the same molecule name for create_goVirt.py, and if the files containing the Gō-like model are in the same directory, you do not have to change anything in the generated protein.itp!
-
+Do not change the names of the files as they are included in various other `.itp` files in a way that requires the correct file names. Additionally, all these files, as well as the main Martini force field ``.itp`` should be present in the same directory.
 
 
-#### 3.3. Adding water bias without applying a  Gō-like model
+Because the main Martini force field ``.itp`` should not be changed, the script adds the necessary bead definitions to two files which are included in the force field (via include statements) if the variable `GO_VIRT` is defined in the ``.top`` file. This variable is automatically set in the ``.top`` file supplied by martinize2 if the `--govs-include` flag is specified.
+
+### 4. Scaling backbone — Water (BB—W) interactions
+
+`create_goVirt` can also be used to apply a bias to scale protein-water interactions. The virtual interaction sites are typically used to solely encode the LJ potentials between virtual site pairs that make up the Gō-like scaffold. However, non-bonded interactions between these virtual sites and other regular Martini 3 beads — such as the water bead, W — can also be defined. This can be particularly useful to correct some issues pertaining to unstable helical transmembrane behavior or over-aggregation of intrinsically disordered proteins. 
+
+
