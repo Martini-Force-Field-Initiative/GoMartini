@@ -38,9 +38,9 @@ def user_input():
     parser.add_argument('--bias_alfa', type=float, default=-0.5,
                         help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
     parser.add_argument('--bias_coil', type=float, default=0.5,
-                        help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
+                        help='VS-W bias epsilon for coil residues (Used with --bias_auto).')
     parser.add_argument('--bias_beta', type=float, default=0.0,
-                        help='VS-W bias epsilon for helical residues (Used with --bias_auto).')
+                        help='VS-W bias epsilon for beta strand residues (Used with --bias_auto).')
     args = parser.parse_args()
     return args
 
