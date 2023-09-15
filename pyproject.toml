@@ -11,7 +11,8 @@ authors = [
   {name = "Luís Borges-Araújo", email = "lpborara@gmail.com"},
 ]
 name = "GoMartini"
-dynamic = ["version"]
+#dynamic = ["version"]
+version = "0.1.0"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["martini", "MD", "martinize", "go model"]
