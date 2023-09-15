@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from importlib.metadata import version, PackageNotFoundError
-
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ImportError:
+    from importlib_metadata import version, PackageNotFoundError
+    
 try:
     __version__ = version("GoMartini")
 except PackageNotFoundError:
