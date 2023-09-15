@@ -1,0 +1,48 @@
+[build-system]
+requires = [
+    "setuptools >= 65",
+    "setuptools_scm[toml]",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+  {name = "Luís Borges-Araújo", email = "lpborara@gmail.com"},
+]
+name = "GoMartini"
+dynamic = ["version"]
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["martini", "MD", "martinize", "go model"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+dependencies = [
+    'importlib_metadata; python_version < "3.8"',
+    "numpy >= 1.22.1, == 1.*",
+]
+
+[project.urls]
+Homepage = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+Documentation = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+Repository = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+
+[project.scripts]
+create_goVirt = "GoMartini.create_goVirt:main"
+
+[tool.setuptools_scm]
+write_to = "GoMartini/_version.py"

@@ -1,4 +1,4 @@
-# create_goVirt
+# GōMartini — powered by create_goVirt
 
 `create_goVirt` powers the deployment of the new virtual-site implementation of GōMartini which can be combined with the latest iteration of the [Martini](http://cgmartini.nl/) model, [Martini 3](https://doi.org/10.1038/s41592-021-01098-3). 
 
