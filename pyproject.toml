@@ -9,11 +9,14 @@ build-backend = "setuptools.build_meta"
 [project]
 authors = [
   {name = "Luís Borges-Araújo", email = "lpborara@gmail.com"},
+  {name = "Sebastian Thallmair"},
+  {name = "Jonathan Barnoud"},
+  {name = "Paulo C. T. Souza"},
 ]
 name = "GoMartini"
 #dynamic = ["version"]
 version = "0.1.0"
-readme = "README.md"
+#readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["martini", "MD", "martinize", "go model"]
 classifiers = [
@@ -37,10 +40,10 @@ dependencies = [
     "numpy >= 1.22.1, == 1.*",
 ]
 
-[project.urls]
-Homepage = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
-Documentation = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
-Repository = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+#[project.urls]
+#Homepage = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+#Documentation = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
+#Repository = "https://github.com/Martini-Force-Field-Initiative/GoMartini"
 
 [project.scripts]
 create_goVirt = "GoMartini.create_goVirt:main"
