@@ -9,7 +9,7 @@
 pip install GoMartini
 ``````
 
-This installs the last released version. You can update an existing installation by running `pip install -U XXXXXXX`. In some cases you may want to experiment with running the latest development version. You can install this version with the following command:
+This installs the last released version. You can update an existing installation by running `pip install -U GoMartini`. In some cases you may want to experiment with running the latest development version. You can install this version with the following command:
 ``````
 pip install git+https://github.com/Martini-Force-Field-Initiative/GoMartini
 ``````
