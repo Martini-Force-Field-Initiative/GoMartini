@@ -2,16 +2,16 @@
 
 `create_goVirt` powers the deployment of the new virtual-site implementation of GōMartini which can be combined with the latest iteration of the [Martini](http://cgmartini.nl/) model, [Martini 3](https://doi.org/10.1038/s41592-021-01098-3). 
 
-## Installation (WIP—Still not packaged)
+## Installation
 
 `create_goVirt` requires python 3.6 or greater. It is distributed via PyPi, and can be installed using the pip command:
 ``````
-pip install XXXXXXX (STILL NEED TO PACKAGE IT.)
+pip install GoMartini
 ``````
 
 This installs the last released version. You can update an existing installation by running `pip install -U XXXXXXX`. In some cases you may want to experiment with running the latest development version. You can install this version with the following command:
 ``````
-pip install git+https://github.com/XXXXXXXXXXXXXXXX
+pip install git+https://github.com/Martini-Force-Field-Initiative/GoMartini
 ``````
 
 Note that development versions, may contain bugs that cause it to produce incorrect topologies. Check the produced output carefully!
