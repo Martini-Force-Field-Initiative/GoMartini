@@ -37,7 +37,7 @@ martinize2 -f pdb.pdb -x cg.pdb -o topol.top -ff martini3001 -dssp dssp -scfix -
 
 Gō-like contacts are defined by two criteria: a residue overlap criterion, and a [restricted chemical structural units (rCSU) criterion](https://doi.org/10.1021/acs.jctc.6b00986). This rCSU criterion is dependent on a contact map, which will bre required in the following step. 
 
-This rCSU contact map can be obtained from a [webserver](http://info.ifpan.edu.pl/~rcsu/rcsu/index.html) by inputing your original atomistic `protein.pdb` file and using the default values for the `radii` and `Fibonacci number`. Note that the requirements for the `pdb` file uploaded to the webserver are quite strict. Thus do carefully check if your contact map is meaningful before using it in the next step. In particular, the table listing the “Residue residue contacts” will be used.
+This rCSU contact map can be obtained from a [webserver](http://pomalab.ippt.pan.pl/GoContactMap/). An alternative older version of the [webserver](http://info.ifpan.edu.pl/~rcsu/rcsu/index.html) is also available. Input your original atomistic `protein.pdb` file and use the default values for the `radii` and `Fibonacci number`. Note that the requirements for the `pdb` file uploaded to the webserver are quite strict. Thus do carefully check if your contact map is meaningful before using it in the next step. In particular, the table listing the “Residue residue contacts” will be used.
 
 Alternatively, a locally executable version of the webserver is also available. The source files for the `contact_map` executable can be found at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3817447.svg)](https://doi.org/10.5281/zenodo.3817447). If you use the locally executable version of the contact map, please cite:
 
