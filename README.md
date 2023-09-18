@@ -35,7 +35,7 @@ martinize2 -f pdb.pdb -x cg.pdb -o topol.top -ff martini3001 -dssp dssp -scfix -
 
 ### 2. Create the contact map
 
-Gō-like contacts are defined by two criteria: a residue overlap criterion, and a [restricted chemical structural units (rCSU) criterion](https://doi.org/10.1021/acs.jctc.6b00986). This rCSU criterion is dependent on a contact map, which will bre required in the following step. 
+Gō-like contacts are defined by two criteria: a residue overlap criterion, and a [restricted chemical structural units (rCSU) criterion](https://doi.org/10.1021/acs.jctc.6b00986). This rCSU criterion is dependent on a contact map, which will be required in the following step. 
 
 This rCSU contact map can be obtained from a [webserver](http://pomalab.ippt.pan.pl/GoContactMap/). An alternative older version of the [webserver](http://info.ifpan.edu.pl/~rcsu/rcsu/index.html) is also available. Input your original atomistic `protein.pdb` file and use the default values for the `radii` and `Fibonacci number`. Note that the requirements for the `pdb` file uploaded to the webserver are quite strict. Thus do carefully check if your contact map is meaningful before using it in the next step. In particular, the table listing the “Residue residue contacts” will be used.
 
@@ -46,7 +46,7 @@ Alternatively, a locally executable version of the webserver is also available. 
 
 ### 3. create_goVirt
 
->The `cg.pdb` structure and `.itp` obtained from martinize2 (see Step 1) are required for the next step, together with a contact map (`.map`) of the atomistic protein structure (see Step 2). 
+The `cg.pdb` structure and `.itp` obtained from martinize2 (see Step 1) are required for the next step, together with a contact map (`.map`) of the atomistic protein structure (see Step 2). 
 
 `create_goVirt` generates all additional files required for GōMartini. 
 
@@ -93,7 +93,7 @@ Because the main Martini force field ``.itp`` should not be changed, the script 
 `create_goVirt` can also be used to apply a bias to scale protein-water interactions. The virtual interaction sites are typically used to solely encode the LJ potentials between virtual site pairs that make up the Gō-like scaffold. However, non-bonded interactions between these virtual sites and other regular Martini 3 beads — such as the water bead, W — can also be defined. This can be particularly useful to correct some issues pertaining to unstable helical transmembrane behavior or over-aggregation of intrinsically disordered proteins. 
 
 #### 4.1. Bias a sequence of consecutive amino acid residues
-A bias can be easily applied to a sequence of consecutive amino acid residues by using the `--idp_start` and `--idp_end` flags to define the first and last aminoacid residue number of the sequence to which the bias should be applied and  `--idp_eps` to define the dissociation energy (kJ/mol) of the Lennard-Jones potential used to modulate the BB-W interaction via the virtual backbone beads. Note that `--idp_eps` can be either a positive value (increasing BB-W interactions) or a negative value (decreasing BB-W interactions). 
+A bias can be easily applied to a sequence of consecutive amino acid residues by using the `--idp_start` and `--idp_end` flags to define the first and last amino acid residue number of the sequence to which the bias should be applied and  `--idp_eps` to define the dissociation energy (kJ/mol) of the Lennard-Jones potential used to modulate the BB-W interaction via the virtual backbone beads. Note that `--idp_eps` can be either a positive value (increasing BB-W interactions) or a negative value (decreasing BB-W interactions). 
 
 A typical `create_goVirt` command for generating a Gō-ready `protein.itp` with added BB-W interaction scaling may look something like this:
 
