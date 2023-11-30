@@ -50,3 +50,7 @@ create_goVirt = "GoMartini.create_goVirt:main"
 
 [tool.setuptools_scm]
 write_to = "GoMartini/_version.py"
+
+[tool.setuptools.packages.find]
+include=["GoMartini*"]
+exclude=["ContactMapGenerator*"]
