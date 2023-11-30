@@ -1,5 +1,6 @@
 # GōMartini — powered by create_goVirt
 
+## LEGACY: This code is no longer supported. `create_goVirt` functionality has been incorporated in [Martinize2](https://github.com/marrink-lab/vermouth-martinize) which now handles the entire GōMartini workflow. 
 `create_goVirt` powers the deployment of the new virtual-site implementation of GōMartini which can be combined with the latest iteration of the [Martini](http://cgmartini.nl/) model, [Martini 3](https://doi.org/10.1038/s41592-021-01098-3). 
 
 ## Installation
