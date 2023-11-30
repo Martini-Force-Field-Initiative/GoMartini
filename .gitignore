@@ -3,3 +3,4 @@ GoMartini/_version.py
 dist
 *.egg-info
 .DS_Store
+ContactMapGenerator/README_files
