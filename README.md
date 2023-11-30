@@ -3,6 +3,7 @@
 ## LEGACY: This code is no longer supported. `create_goVirt` functionality has been incorporated in [Martinize2](https://github.com/marrink-lab/vermouth-martinize) which now handles the entire GōMartini workflow. 
 ### If nonetheless you want to use `create_goVirt`, you should use Martinize2 versions up to 0.9.6.
 
+## Executable version of the Contact map can also be found here under `ContactMapGenerator`.
 ## Installation
 `create_goVirt` powers the deployment of the new virtual-site implementation of GōMartini which can be combined with the latest iteration of the [Martini](http://cgmartini.nl/) model, [Martini 3](https://doi.org/10.1038/s41592-021-01098-3). 
 `create_goVirt` requires python 3.6 or greater. It is distributed via PyPi, and can be installed using the pip command:
